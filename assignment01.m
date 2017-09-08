@@ -1,0 +1,62 @@
+clear all; close all; clc;
+
+StartingFrame =1;
+EndingFrame = 448;
+
+Xcentroid = [];
+Ycentroid = [];
+
+for k = StartingFrame : EndingFrame-1
+%pos1 = imread('ant/img008.jpg');
+%pos2 = imread('ant/img009.jpg');
+
+pos1 = imread(['ant/img',sprintf('%2.3d',k),'.jpg']);
+pos2 = imread(['ant/img',sprintf('%2.3d',k+1),'.jpg']);
+
+diff1 = abs(pos1-pos2);
+
+hsv = rgb2hsv(diff1);
+I = hsv(:,:,3);
+Ithresh = I > 0.055;
+
+SE = strel('disk',2,8);              %opening to reomove noise
+Iopen = imopen(Ithresh,SE);
+
+SE = strel('disk',3,8);              %closing to remove jagged egdes
+Iclose = imclose(Iopen,SE);
+
+BW = imopen(Iclose,SE);              %BW
+
+[labels,number] = bwlabel(BW,8);     %Breakup threshhold image to obejects+
+
+if number > 0
+    
+Istats = regionprops(labels,'basic','Centroid'); %Extract Centroid
+[values, index] = sort([Istats.Area],'descend');
+[maxVal,maxIndex] = max([Istats.Area]);          %To get the area of the larger object
+
+%imshow(BW)
+    
+    Xcentroid = [Xcentroid Istats(maxIndex).Centroid(1)];
+    Ycentroid = [Ycentroid Istats(maxIndex).Centroid(2)];
+    
+ %rgb = imread(['ant/img',sprintf('%2.3d',k),'.jpg']);
+    %imshow(rgb);
+                                                        
+end
+end
+
+close all;
+pos1 = imread('ant/img008.jpg');
+imshow(pos1);
+hold on; 
+plot(Xcentroid,Ycentroid);
+                                   
+%rectangle('Position',[Istats(maxIndex).BoundingBox],'LineWidth',2,'EdgeColor','g');
+
+%hold on;                                         %Plotting Objects Centroid
+
+%rectangle('Position',[Istats(maxIndex).BoundingBox],'LineWidth',2,'EdgeColor','g');
+%text(Istats(maxIndex).Centroid(1)+10,Istats(maxIndex).Centroid(2)+10, 'Object','fontsize',20,'color','r','fontweight','bold');
+
+
